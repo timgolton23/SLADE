@@ -10,18 +10,19 @@ jobs:
     runs-on: windows-2022
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_cache
-      # Fluidsynth isn't available as a vcpkg-installed dependency here; MIDI
-      # playback falls back to SLADE's other MIDI options
+      # Fluidsynth isn't installed via vcpkg here; MIDI playback falls back to
+      # SLADE's other MIDI options
       CL: /DNO_FLUIDSYNTH
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Restore library cache
-        uses: actions/cache@v4
+        id: cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}\vcpkg_cache
-          key: vcpkg-x64-windows-static-${{ hashFiles('.github/workflows/ci_windows.yml') }}
+          key: vcpkg-x64-windows-static-${{ github.run_id }}
           restore-keys: vcpkg-x64-windows-static-
 
       - name: Set up vcpkg
@@ -32,12 +33,34 @@ jobs:
           C:\slade-vcpkg\bootstrap-vcpkg.bat -disableMetrics
           C:\slade-vcpkg\vcpkg integrate install
 
+      # Each library is installed separately so a failure names the culprit
       - name: Install libraries (slow the first time)
         shell: pwsh
         run: |
-          C:\slade-vcpkg\vcpkg install --triplet x64-windows-static `
-            lua mpg123 sfml libwebp "wxwidgets[webview]"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $libs = @("lua", "mpg123", "sfml", "libwebp", "wxwidgets[webview]")
+          foreach ($lib in $libs) {
+            C:\slade-vcpkg\vcpkg install --triplet x64-windows-static $lib *>&1 | Tee-Object -FilePath vcpkg_log.txt
+            if ($LASTEXITCODE -ne 0) {
+              $tail = (Get-Content vcpkg_log.txt | Select-Object -Last 40) -join '%0A'
+              Write-Output "::error title=vcpkg install $lib failed::$tail"
+              # Show the port's own build log if vcpkg names one
+              $logs = Select-String -Path vcpkg_log.txt -Pattern '[A-Z]:\\[^ ]*\.log' -AllMatches | ForEach-Object { $_.Matches.Value } | Select-Object -Unique -First 2
+              foreach ($l in $logs) {
+                if (Test-Path $l) {
+                  $t = (Get-Content $l | Select-String -Pattern 'error' | Select-Object -Last 25) -join '%0A'
+                  Write-Output "::error title=$(Split-Path $l -Leaf)::$t"
+                }
+              }
+              exit 1
+            }
+          }
+
+      - name: Save library cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg_cache
+          key: vcpkg-x64-windows-static-${{ github.run_id }}
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
@@ -47,8 +70,15 @@ jobs:
         run: |
           msbuild msvc\SLADE.sln /m /p:Configuration=Release /p:Platform=x64 `
             /p:VcpkgRoot=C:\slade-vcpkg\ `
-            /p:RunCodeAnalysis=false /p:EnableMicrosoftCodeAnalysis=false /p:EnableClangTidyCodeAnalysis=false
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            /p:RunCodeAnalysis=false /p:EnableMicrosoftCodeAnalysis=false /p:EnableClangTidyCodeAnalysis=false `
+            /clp:ErrorsOnly /flp:"LogFile=msbuild_log.txt;Verbosity=minimal"
+          if ($LASTEXITCODE -ne 0) {
+            $errs = Select-String -Path msbuild_log.txt -Pattern ': (fatal )?error ' | Select-Object -First 30 | ForEach-Object { $_.Line.Trim() }
+            $i = 0
+            foreach ($e in $errs) { $i++; Write-Output "::error title=MSBuild error $i::$e" }
+            if ($i -eq 0) { Write-Output "::error title=MSBuild failed::$((Get-Content msbuild_log.txt | Select-Object -Last 30) -join '%0A')" }
+            exit 1
+          }
 
       - name: Package
         shell: pwsh
