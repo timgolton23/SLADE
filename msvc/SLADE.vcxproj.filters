@@ -258,6 +258,9 @@
     <ClCompile Include="..\src\UI\Canvas\MapPreviewCanvas.cpp">
       <Filter>UI\Canvas</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\UI\Canvas\ModelCanvas.cpp">
+      <Filter>UI\Canvas</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\UI\Canvas\OGLCanvas.cpp">
       <Filter>UI\Canvas</Filter>
     </ClCompile>
@@ -382,6 +385,9 @@
       <Filter>Main Editor\UI\EntryPanel</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MainEditor\UI\EntryPanel\AudioEntryPanel.cpp">
+      <Filter>Main Editor\UI\EntryPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MainEditor\UI\EntryPanel\ModelEntryPanel.cpp">
       <Filter>Main Editor\UI\EntryPanel</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MainEditor\UI\EntryPanel\DataEntryPanel.cpp">
@@ -661,6 +667,9 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Graphics\Translation.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Graphics\IQMModel.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Graphics\CTexture\CTexture.cpp">
@@ -1008,6 +1017,9 @@
     <ClCompile Include="..\src\OpenGL\View.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\OpenGL\ModelRenderer.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\SLADEMap\MapFormat\Doom32XMapFormat.cpp">
       <Filter>SLADEMap\MapFormat</Filter>
     </ClCompile>
@@ -1122,6 +1134,9 @@
       <Filter>UI\Canvas</Filter>
     </ClInclude>
     <ClInclude Include="..\src\UI\Canvas\MapPreviewCanvas.h">
+      <Filter>UI\Canvas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UI\Canvas\ModelCanvas.h">
       <Filter>UI\Canvas</Filter>
     </ClInclude>
     <ClInclude Include="..\src\UI\Canvas\OGLCanvas.h">
@@ -1293,6 +1308,9 @@
       <Filter>Main Editor\UI\EntryPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\src\MainEditor\UI\EntryPanel\AudioEntryPanel.h">
+      <Filter>Main Editor\UI\EntryPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MainEditor\UI\EntryPanel\ModelEntryPanel.h">
       <Filter>Main Editor\UI\EntryPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\src\MainEditor\UI\EntryPanel\DataEntryPanel.h">
@@ -1586,6 +1604,9 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Graphics\Translation.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Graphics\IQMModel.h">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Graphics\CTexture\CTexture.h">
@@ -1932,6 +1953,9 @@
       <Filter>UI\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\src\OpenGL\View.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\OpenGL\ModelRenderer.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\src\SLADEMap\MapFormat\Doom32XMapFormat.h">

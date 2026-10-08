@@ -44,6 +44,7 @@
 #include "EntryPanel/GfxEntryPanel.h"
 #include "EntryPanel/HexEntryPanel.h"
 #include "EntryPanel/MapEntryPanel.h"
+#include "EntryPanel/ModelEntryPanel.h"
 #include "EntryPanel/PaletteEntryPanel.h"
 #include "EntryPanel/TextEntryPanel.h"
 #include "Game/Configuration.h"
@@ -2936,6 +2937,8 @@ bool ArchivePanel::openEntry(ArchiveEntry* entry, bool force)
 			new_area = audioArea();
 		else if (entry->type()->editor() == "data")
 			new_area = dataArea();
+		else if (entry->type()->editor() == "model")
+			new_area = modelArea();
 		else if (entry->type()->editor() == "default")
 			new_area = default_area_;
 		else
@@ -3505,6 +3508,8 @@ EntryPanel* ArchivePanel::createPanelForEntry(const ArchiveEntry* entry, wxWindo
 		entry_panel = new AudioEntryPanel(parent);
 	else if (entry->type()->editor() == "data")
 		entry_panel = new DataEntryPanel(parent);
+	else if (entry->type()->editor() == "model")
+		entry_panel = new ModelEntryPanel(parent);
 	else
 		entry_panel = new DefaultEntryPanel(parent);
 
@@ -3703,6 +3708,17 @@ EntryPanel* ArchivePanel::dataArea()
 		data_area_ = new DataEntryPanel(splitter_);
 
 	return data_area_;
+}
+
+// -----------------------------------------------------------------------------
+// Returns the ModelEntryPanel for this ArchivePanel, creating it if needed
+// -----------------------------------------------------------------------------
+EntryPanel* ArchivePanel::modelArea()
+{
+	if (model_area_ == nullptr)
+		model_area_ = new ModelEntryPanel(splitter_);
+
+	return model_area_;
 }
 
 

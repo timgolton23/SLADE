@@ -143,6 +143,7 @@ protected:
 	EntryPanel* map_area_     = nullptr;
 	EntryPanel* audio_area_   = nullptr;
 	EntryPanel* data_area_    = nullptr;
+	EntryPanel* model_area_   = nullptr;
 
 	// Signal connections
 	sigslot::scoped_connection sc_archive_saved_;
@@ -163,6 +164,7 @@ protected:
 	EntryPanel* mapArea();
 	EntryPanel* audioArea();
 	EntryPanel* dataArea();
+	EntryPanel* modelArea();
 
 	// Events
 	void         onEntryListSelectionChange(wxDataViewEvent& e);

@@ -76,6 +76,29 @@ public:
 	}
 };
 
+class IQMModelDataFormat : public EntryDataFormat
+{
+public:
+	IQMModelDataFormat() : EntryDataFormat("mesh_iqm") {};
+	~IQMModelDataFormat() = default;
+
+	int isThisFormat(MemChunk& mc) override
+	{
+		// Check size (16 byte magic + 27 uint32 header fields)
+		if (mc.size() >= 124)
+		{
+			// Check for "INTERQUAKEMODEL\0" magic
+			static const char magic[] = "INTERQUAKEMODEL";
+			for (unsigned a = 0; a < 16; ++a)
+				if (mc[a] != static_cast<uint8_t>(magic[a]))
+					return MATCH_FALSE;
+
+			return MATCH_TRUE;
+		}
+		return MATCH_FALSE;
+	}
+};
+
 class VOXVoxelDataFormat : public EntryDataFormat
 {
 public:
