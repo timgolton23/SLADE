@@ -1,0 +1,67 @@
+name: Build (Windows)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Windows x64
+    runs-on: windows-2022
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_cache
+      # Fluidsynth isn't available as a vcpkg-installed dependency here; MIDI
+      # playback falls back to SLADE's other MIDI options
+      CL: /DNO_FLUIDSYNTH
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore library cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg_cache
+          key: vcpkg-x64-windows-static-${{ hashFiles('.github/workflows/ci_windows.yml') }}
+          restore-keys: vcpkg-x64-windows-static-
+
+      - name: Set up vcpkg
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+          git clone https://github.com/microsoft/vcpkg.git C:\slade-vcpkg
+          C:\slade-vcpkg\bootstrap-vcpkg.bat -disableMetrics
+          C:\slade-vcpkg\vcpkg integrate install
+
+      - name: Install libraries (slow the first time)
+        shell: pwsh
+        run: |
+          C:\slade-vcpkg\vcpkg install --triplet x64-windows-static `
+            lua mpg123 sfml libwebp "wxwidgets[webview]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build SLADE
+        shell: pwsh
+        run: |
+          msbuild msvc\SLADE.sln /m /p:Configuration=Release /p:Platform=x64 `
+            /p:VcpkgRoot=C:\slade-vcpkg\ `
+            /p:RunCodeAnalysis=false /p:EnableMicrosoftCodeAnalysis=false /p:EnableClangTidyCodeAnalysis=false
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item dist\SLADE-x64.exe package\SLADE.exe
+          # slade.pk3 is SLADE's resource archive (a zip of dist\res)
+          Compress-Archive -Path dist\res\* -DestinationPath package\slade.zip -Force
+          Move-Item package\slade.zip package\slade.pk3
+          Get-ChildItem package
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: SLADE-windows-x64
+          path: package\
