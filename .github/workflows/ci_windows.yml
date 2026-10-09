@@ -38,7 +38,7 @@ jobs:
       - name: Install libraries (slow the first time)
         shell: pwsh
         run: |
-          $libs = @("lua", "mpg123", "sfml", "libwebp", "wxwidgets[webview]")
+          $libs = @("lua", "mpg123", "sfml", "libwebp", "ftgl", "wxwidgets[webview]")
           foreach ($lib in $libs) {
             C:\slade-vcpkg\vcpkg install --triplet x64-windows-static $lib *>&1 | Tee-Object -FilePath vcpkg_log.txt
             if ($LASTEXITCODE -ne 0) {
