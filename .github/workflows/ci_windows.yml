@@ -70,12 +70,15 @@ jobs:
         shell: pwsh
         run: |
           # Fluidsynth isn't installed here; MIDI falls back to SLADE's other MIDI options
-          cmake --preset win-x64-release -DNO_FLUIDSYNTH=ON *>&1 | Tee-Object -FilePath build_log.txt
+          # msvc-dev-cmd points VCPKG_ROOT at Visual Studio's bundled vcpkg; use ours
+          $env:VCPKG_ROOT = "C:\slade-vcpkg"
+          cmake --preset win-x64-release -DNO_FLUIDSYNTH=ON `
+            -DCMAKE_TOOLCHAIN_FILE=C:/slade-vcpkg/scripts/buildsystems/vcpkg.cmake *>&1 | Tee-Object -FilePath build_log.txt
           if ($LASTEXITCODE -eq 0) {
             cmake --build out/build/win-x64-release *>&1 | Tee-Object -FilePath build_log.txt -Append
           }
           if ($LASTEXITCODE -ne 0) {
-            $errs = Select-String -Path build_log.txt -Pattern '(: (fatal )?error |CMake Error|error LNK)' | Select-Object -First 30 | ForEach-Object { $_.Line.Trim() }
+            $errs = Select-String -Path build_log.txt -Pattern '(: (fatal )?error |CMake Error|error LNK)' -Context 0,8 | Select-Object -First 30 | ForEach-Object { (@($_.Line.Trim()) + $_.Context.PostContext) -join '%0A' }
             $i = 0
             foreach ($e in $errs) { $i++; Write-Output "::error title=Build error $i::$e" }
             if ($i -eq 0) { Write-Output "::error title=Build failed::$((Get-Content build_log.txt | Select-Object -Last 40) -join '%0A')" }
