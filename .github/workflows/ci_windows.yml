@@ -11,8 +11,9 @@ jobs:
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_cache
       # Fluidsynth isn't installed via vcpkg here; MIDI playback falls back to
-      # SLADE's other MIDI options
-      CL: /DNO_FLUIDSYNTH
+      # SLADE's other MIDI options. /utf-8 is required by the bundled fmt
+      # library but missing from the .vcxproj files
+      CL: /DNO_FLUIDSYNTH /utf-8
 
     steps:
       - uses: actions/checkout@v4
