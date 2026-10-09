@@ -10,10 +10,7 @@ jobs:
     runs-on: windows-2022
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_cache
-      # Fluidsynth isn't installed via vcpkg here; MIDI playback falls back to
-      # SLADE's other MIDI options. /utf-8 is required by the bundled fmt
-      # library but missing from the .vcxproj files
-      CL: /DNO_FLUIDSYNTH /utf-8
+      VCPKG_ROOT: C:\slade-vcpkg
 
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +35,7 @@ jobs:
       - name: Install libraries (slow the first time)
         shell: pwsh
         run: |
-          $libs = @("lua", "mpg123", "sfml", "libwebp", "ftgl", "wxwidgets[webview]")
+          $libs = @("zlib", "bzip2", "libpng", "freetype", "ftgl", "lua", "mpg123", "sfml", "libwebp", "wxwidgets[webview]")
           foreach ($lib in $libs) {
             C:\slade-vcpkg\vcpkg install --triplet x64-windows-static $lib *>&1 | Tee-Object -FilePath vcpkg_log.txt
             if ($LASTEXITCODE -ne 0) {
@@ -63,21 +60,25 @@ jobs:
           path: ${{ github.workspace }}\vcpkg_cache
           key: vcpkg-x64-windows-static-${{ github.run_id }}
 
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v2
+      # Uses SLADE's CMake setup (the msvc\*.vcxproj files are out of date)
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Build SLADE
         shell: pwsh
         run: |
-          msbuild msvc\SLADE.sln /m /p:Configuration=Release /p:Platform=x64 `
-            /p:VcpkgRoot=C:\slade-vcpkg\ `
-            /p:RunCodeAnalysis=false /p:EnableMicrosoftCodeAnalysis=false /p:EnableClangTidyCodeAnalysis=false `
-            /clp:ErrorsOnly /flp:"LogFile=msbuild_log.txt;Verbosity=minimal"
+          # Fluidsynth isn't installed here; MIDI falls back to SLADE's other MIDI options
+          cmake --preset win-x64-release -DNO_FLUIDSYNTH=ON *>&1 | Tee-Object -FilePath build_log.txt
+          if ($LASTEXITCODE -eq 0) {
+            cmake --build out/build/win-x64-release *>&1 | Tee-Object -FilePath build_log.txt -Append
+          }
           if ($LASTEXITCODE -ne 0) {
-            $errs = Select-String -Path msbuild_log.txt -Pattern ': (fatal )?error ' | Select-Object -First 30 | ForEach-Object { $_.Line.Trim() }
+            $errs = Select-String -Path build_log.txt -Pattern '(: (fatal )?error |CMake Error|error LNK)' | Select-Object -First 30 | ForEach-Object { $_.Line.Trim() }
             $i = 0
-            foreach ($e in $errs) { $i++; Write-Output "::error title=MSBuild error $i::$e" }
-            if ($i -eq 0) { Write-Output "::error title=MSBuild failed::$((Get-Content msbuild_log.txt | Select-Object -Last 30) -join '%0A')" }
+            foreach ($e in $errs) { $i++; Write-Output "::error title=Build error $i::$e" }
+            if ($i -eq 0) { Write-Output "::error title=Build failed::$((Get-Content build_log.txt | Select-Object -Last 40) -join '%0A')" }
             exit 1
           }
 
@@ -85,7 +86,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item dist\SLADE-x64.exe package\SLADE.exe
+          Copy-Item dist\SLADE.exe package\SLADE.exe
           # slade.pk3 is SLADE's resource archive (a zip of dist\res)
           Compress-Archive -Path dist\res\* -DestinationPath package\slade.zip -Force
           Move-Item package\slade.zip package\slade.pk3
