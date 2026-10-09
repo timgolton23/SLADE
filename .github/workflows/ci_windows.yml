@@ -72,7 +72,7 @@ jobs:
           # Fluidsynth isn't installed here; MIDI falls back to SLADE's other MIDI options
           # msvc-dev-cmd points VCPKG_ROOT at Visual Studio's bundled vcpkg; use ours
           $env:VCPKG_ROOT = "C:\slade-vcpkg"
-          cmake --preset win-x64-release -DNO_FLUIDSYNTH=ON `
+          cmake --preset win-x64-release -DNO_FLUIDSYNTH=ON -DNO_WEBVIEW=ON `
             -DCMAKE_TOOLCHAIN_FILE=C:/slade-vcpkg/scripts/buildsystems/vcpkg.cmake *>&1 | Tee-Object -FilePath build_log.txt
           if ($LASTEXITCODE -eq 0) {
             cmake --build out/build/win-x64-release *>&1 | Tee-Object -FilePath build_log.txt -Append
